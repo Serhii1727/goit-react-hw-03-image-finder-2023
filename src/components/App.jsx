@@ -6,10 +6,18 @@ export class App extends Component {
   state = {
     searchQuery: '',
   };
+
+  handleSearchForm = searchQuery => {
+    this.setState({
+      searchQuery,
+    });
+  };
+
   render() {
+    console.log(this.state);
     return (
       <div className={css.appContainer}>
-        <Searchbar />
+        <Searchbar onSubmit={this.handleSearchForm} />
       </div>
     );
   }
