@@ -2,12 +2,18 @@ import css from './ImageGalleryItem.module.css';
 
 export default function ImageGalleryItem({
   webformatURL,
-  largeImageURL,
   name,
+  id,
+  getImageId,
   toggleModal,
 }) {
   return (
-    <li className={css.imageGalleryItem} onClick={toggleModal}>
+    <li
+      className={css.imageGalleryItem}
+      onClick={toggleModal}
+      onClickCapture={() => getImageId(id)}
+      id={id}
+    >
       <img src={webformatURL} alt={name} />
     </li>
   );

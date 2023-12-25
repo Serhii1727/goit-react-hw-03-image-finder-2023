@@ -9,7 +9,8 @@ export default class ImageGallery extends PureComponent {
   state = {
     page: 1,
     images: [],
-    isModal: false,
+    showModal: false,
+    modalData: null,
   };
 
   componentDidUpdate(prevProp, prevState) {
@@ -54,27 +55,27 @@ export default class ImageGallery extends PureComponent {
     });
   };
 
-  toggleModal = () => {
-    if (this.state.isModal) {
-      this.setState({ isModal: false });
-    }
-    this.setState({ isModal: true });
+  closeModal = () => {
+    this.setState({ showModal: false });
   };
 
-  addImageToModal = event => {
-    console.log(event.target);
+  getImageId = id => {
+    const currentImage = this.state.images.find(item => item.id === id);
+    this.setState({ showModal: true, modalData: currentImage });
   };
 
   render() {
-    const { images, isModal } = this.state;
+    const { images, showModal, modalData } = this.state;
+
     return (
       <>
         <ul className={css.imageGallery}>
           {images.map(({ id, webformatURL, largeImageURL, tags }) => (
             <ImageGalleryItem
               toggleModal={this.toggleModal}
-              addImageToModal={this.addImageToModal}
+              getImageId={this.getImageId}
               key={id}
+              id={id}
               webformatURL={webformatURL}
               largeImageURL={largeImageURL}
               name={tags}
@@ -82,7 +83,9 @@ export default class ImageGallery extends PureComponent {
           ))}
         </ul>
         {images.length >= 1 && <Button loadMore={this.loadMore} />}
-        {isModal && <Modal />}
+        {showModal && (
+          <Modal modalData={modalData} closeModal={this.closeModal} />
+        )}
       </>
     );
   }
