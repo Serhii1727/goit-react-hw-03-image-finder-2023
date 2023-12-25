@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import { FaSearch } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import css from './Searchbar.module.css';
 import { IconContext } from 'react-icons/lib';
 
@@ -11,6 +12,10 @@ export default class Searchbar extends Component {
   handleForm = event => {
     event.preventDefault();
     const { searchQuery } = this.state;
+
+    if (searchQuery.trim() === '') {
+      toast.warn('Please enter your request');
+    }
     this.props.onSubmit(searchQuery);
     this.resetSearchQuery();
   };

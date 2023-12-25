@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import { BallTriangle } from 'react-loader-spinner';
+
 import fetchImage from 'components/api/api';
 import ImageGalleryItem from 'components/ImageGalleryItem';
 import Button from 'components/Button';
