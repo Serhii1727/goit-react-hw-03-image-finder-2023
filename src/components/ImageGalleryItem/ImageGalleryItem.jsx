@@ -5,15 +5,9 @@ export default function ImageGalleryItem({
   name,
   id,
   getImageId,
-  toggleModal,
 }) {
   return (
-    <li
-      className={css.imageGalleryItem}
-      onClick={toggleModal}
-      onClickCapture={() => getImageId(id)}
-      id={id}
-    >
+    <li className={css.imageGalleryItem} onClick={() => getImageId(id)} id={id}>
       <img src={webformatURL} alt={name} />
     </li>
   );
