@@ -2,7 +2,6 @@ import { Component } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import fetchImage from 'components/services/api';
-import scrollTop from './services/scrollTop';
 import Searchbar from './Searchbar';
 import Modal from 'components/Modal';
 import Button from 'components/Button';
@@ -19,24 +18,27 @@ export class App extends Component {
     modalData: null,
     error: null,
     status: 'idle',
+    showLoadMore: false,
   };
 
   componentDidUpdate(prevProp, prevState) {
     const { searchQuery, page } = this.state;
 
-    if (prevState.searchQuery !== searchQuery && searchQuery.trim() === '') {
-      this.setState({ page: 1, status: 'idle' });
-      return;
-    }
+    if (prevState.searchQuery !== searchQuery || prevState.page !== page) {
+      this.setState({ status: 'pending' });
 
-    if (prevState.searchQuery !== searchQuery) {
-      this.setState({ page: 1, status: 'pending' });
-
-      scrollTop();
+      if (searchQuery === '') {
+        this.setState({ status: 'idle' });
+        return;
+      }
 
       fetchImage(searchQuery, page)
         .then(data => {
-          const { hits } = data;
+          const { totalHits, hits } = data;
+
+          const isShow = this.state.page < Math.ceil(totalHits / 12);
+
+          this.setState({ showLoadMore: isShow });
 
           const images = hits.map(
             ({ id, webformatURL, largeImageURL, tags }) => {
@@ -48,10 +50,9 @@ export class App extends Component {
             this.setState({ status: 'rejected' });
             return;
           }
-
-          this.setState({ images, status: 'resolved' });
+          this.setState({ status: 'resolved' });
           this.setState(prevState => ({
-            page: prevState.page + 1,
+            images: [...prevState.images, ...images],
           }));
         })
         .catch(error => this.setState({ error }));
@@ -61,6 +62,9 @@ export class App extends Component {
   handleSearchForm = searchQuery => {
     this.setState({
       searchQuery,
+      images: [],
+      page: 1,
+      showLoadMore: false,
     });
   };
 
@@ -74,75 +78,43 @@ export class App extends Component {
   };
 
   loadMore = () => {
-    const { searchQuery, page } = this.state;
-    this.setState({ status: 'pending' });
-
-    fetchImage(searchQuery, page)
-      .then(data => {
-        const { hits } = data;
-
-        const images = hits.map(({ id, webformatURL, largeImageURL, tags }) => {
-          return { id, webformatURL, largeImageURL, tags };
-        });
-
-        this.setState(prevState => ({
-          status: 'resolved',
-          page: prevState.page + 1,
-          images: [...prevState.images, ...images],
-        }));
-      })
-      .catch(error => this.setState({ error }));
+    this.setState(prevState => ({
+      page: prevState.page + 1,
+    }));
   };
 
   render() {
-    const { showModal, modalData, images, status, searchQuery } = this.state;
+    const { showModal, modalData, images, status, searchQuery, showLoadMore } =
+      this.state;
 
-    if (status === 'idle') {
-      return (
-        <div className={css.appContainer}>
-          <Searchbar onSubmit={this.handleSearchForm} />
-          <ToastContainer autoClose={3000} theme="colored" />;
-        </div>
-      );
-    }
-
-    if (status === 'pending') {
-      return (
-        <div className={css.appContainer}>
-          <Searchbar onSubmit={this.handleSearchForm} />
-          {images.length > 1 && (
-            <ImageGallery images={images} getImageId={this.getImageId} />
-          )}
-          <Loader />
-          <ToastContainer autoClose={3000} theme="colored" />;
-        </div>
-      );
-    }
-
-    if (status === 'rejected') {
-      return (
-        <div className={css.appContainer}>
-          <Searchbar onSubmit={this.handleSearchForm} />
+    return (
+      <div className={css.appContainer}>
+        <Searchbar onSubmit={this.handleSearchForm} />
+        {images.length > 0 && (
+          <ImageGallery images={images} getImageId={this.getImageId} />
+        )}
+        {status === 'pending' && <Loader />}
+        {status === 'rejected' && (
           <h1 className={css.title}>
             There was nothing found for your request "{searchQuery}"
           </h1>
-          <ToastContainer autoClose={3000} theme="colored" />;
-        </div>
-      );
-    }
-
-    if (status === 'resolved') {
-      return (
-        <div className={css.appContainer}>
-          <Searchbar onSubmit={this.handleSearchForm} />
-          <ImageGallery images={images} getImageId={this.getImageId} />;
-          {images.length >= 1 && <Button loadMore={this.loadMore} />}
-          {showModal && (
-            <Modal modalData={modalData} closeModal={this.closeModal} />
-          )}
-          <ToastContainer autoClose={3000} theme="colored" />;
-        </div>
-      );
-    }
+        )}
+        {status === 'resolved' && (
+          <>
+            {showLoadMore ? (
+              <Button loadMore={this.loadMore} />
+            ) : (
+              <p className={css.message}>
+                We're sorry, but you've reached the end of search results.
+              </p>
+            )}
+            {showModal && (
+              <Modal modalData={modalData} closeModal={this.closeModal} />
+            )}
+          </>
+        )}
+        <ToastContainer autoClose={3000} theme="colored" />;
+      </div>
+    );
   }
 }
